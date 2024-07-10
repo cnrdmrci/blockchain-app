@@ -1,58 +1,27 @@
 package main
 
 import (
-	"bytes"
-	"crypto/sha256"
+	"blockchain-app/blockchain"
 	"fmt"
+	"strconv"
 )
 
-type Block struct {
-	Hash     []byte
-	Data     []byte
-	PrevHash []byte
-}
-
-type BlockChain struct {
-	blocks []*Block
-}
-
-func (b *Block) DeriveHash() {
-	info := bytes.Join([][]byte{b.Data, b.PrevHash}, []byte{})
-	hash := sha256.Sum256(info)
-	b.Hash = hash[:]
-}
-
-func CreateBlock(data string, prevHash []byte) *Block {
-	block := &Block{[]byte{}, []byte(data), prevHash}
-	block.DeriveHash()
-	return block
-}
-
-func (chain *BlockChain) AddBlock(data string) {
-	prevBlock := chain.blocks[len(chain.blocks)-1]
-	newBlock := CreateBlock(data, prevBlock.Hash)
-	chain.blocks = append(chain.blocks, newBlock)
-}
-
-func Genesis() *Block {
-	return CreateBlock("Genesis", make([]byte, 32))
-}
-
-func InitBlockChain() *BlockChain {
-	return &BlockChain{[]*Block{Genesis()}}
-}
-
 func main() {
-	chain := InitBlockChain()
+	fmt.Printf("-------------------- Blockchain Started ------------------------\n")
 
+	chain := blockchain.InitBlockChain()
 	chain.AddBlock("First Block after Genesis")
 	chain.AddBlock("Second Block after Genesis")
 	chain.AddBlock("Third Block after Genesis")
 
-	for _, block := range chain.blocks {
-		fmt.Printf("-------------------------------------------------------------------------------\n")
-		fmt.Printf("Previous Hash: %x\n", block.PrevHash)
-		fmt.Printf("Data in Block: %s\n", block.Data)
-		fmt.Printf("Hash         : %x\n", block.Hash)
+	fmt.Printf("--------------------- Mining Completed  ------------------------\n")
+
+	for _, block := range chain.Blocks {
+		fmt.Printf("Data in Block  : %s\n", block.Data)
+		fmt.Printf("Previous Hash  : %x\n", block.PrevHash)
+		fmt.Printf("Hash           : %x\n", block.Hash)
+		fmt.Printf("Nonce          : %x\n", block.Nonce)
+		fmt.Printf("PoW Validation : %s\n", strconv.FormatBool(blockchain.NewProof(block).Validate()))
+		fmt.Printf("---------------------------------------------------------------------------------\n")
 	}
 }
