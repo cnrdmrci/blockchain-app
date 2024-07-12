@@ -30,7 +30,7 @@ func (pow *ProofOfWork) InitData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
-			pow.Block.Data,
+			pow.Block.HashTransactions(),
 			Int64ToByteSlice(int64(nonce)),
 			Int64ToByteSlice(int64(Difficulty)),
 		},
