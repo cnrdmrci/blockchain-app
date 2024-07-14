@@ -25,7 +25,7 @@ type Wallet struct {
 }
 
 func (w *Wallet) GetAddress() string {
-	pubHash := getPublicKeyHash(w.PublicKey)
+	pubHash := GetPublicKeyHash(w.PublicKey)
 	versionedHash := append([]byte{version}, pubHash...)
 	checksumHash := getChecksum(versionedHash)
 	fullHash := append(versionedHash, checksumHash...)
@@ -52,6 +52,18 @@ func CreateAndSaveNewWallet(nodeID string) string {
 	return address
 }
 
+func GetPublicKeyHash(pubKey []byte) []byte {
+	pubHash := sha256.Sum256(pubKey)
+
+	hasher := ripemd160.New()
+	_, err := hasher.Write(pubHash[:])
+	if err != nil {
+		handlers.HandleErrors(err)
+	}
+
+	return hasher.Sum(nil)
+}
+
 func createEcdsaKeyPair() (ecdsa.PrivateKey, []byte) {
 	curve := elliptic.P256()
 
@@ -69,18 +81,6 @@ func createNewWallet() *Wallet {
 	wallet := Wallet{private, public}
 
 	return &wallet
-}
-
-func getPublicKeyHash(pubKey []byte) []byte {
-	pubHash := sha256.Sum256(pubKey)
-
-	hasher := ripemd160.New()
-	_, err := hasher.Write(pubHash[:])
-	if err != nil {
-		handlers.HandleErrors(err)
-	}
-
-	return hasher.Sum(nil)
 }
 
 func getChecksum(payload []byte) []byte {
