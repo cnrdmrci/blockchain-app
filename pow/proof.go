@@ -1,6 +1,7 @@
-package blockchain
+package pow
 
 import (
+	"blockchain-app/blockchain"
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
@@ -13,11 +14,11 @@ import (
 const Difficulty = 12
 
 type ProofOfWork struct {
-	Block  *Block
+	Block  *blockchain.Block
 	Target *big.Int
 }
 
-func NewProof(b *Block) *ProofOfWork {
+func NewProof(b *blockchain.Block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-Difficulty))
 
