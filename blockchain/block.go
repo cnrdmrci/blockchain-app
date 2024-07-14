@@ -1,34 +1,30 @@
 package blockchain
 
 import (
+	"blockchain-app/handlers"
+	"blockchain-app/merkle"
+	"blockchain-app/pow"
 	"bytes"
-	"crypto/sha256"
 	"encoding/gob"
-	"log"
+	"time"
 )
 
 type Block struct {
+	Timestamp    int64
 	Hash         []byte
 	Transactions []*Transaction
 	PrevHash     []byte
 	Nonce        int
+	Height       int
 }
 
-func (b *Block) HashTransactions() []byte {
-	var txHashes [][]byte
-	var txHash [32]byte
-
-	for _, tx := range b.Transactions {
-		txHashes = append(txHashes, tx.ID)
-	}
-	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
-
-	return txHash[:]
+func CreateGenesisBlock(tx *Transaction) *Block {
+	return CreateBlock([]*Transaction{tx}, make([]byte, 32), 0)
 }
 
-func CreateBlock(txs []*Transaction, prevHash []byte) *Block {
-	block := &Block{[]byte{}, txs, prevHash, 0}
-	pow := NewProof(block)
+func CreateBlock(txs []*Transaction, prevHash []byte, height int) *Block {
+	block := &Block{time.Now().Unix(), []byte{}, txs, prevHash, 0, height}
+	pow := pow.NewProof(block)
 	nonce, hash := pow.Run()
 
 	block.Hash = hash[:]
@@ -37,35 +33,29 @@ func CreateBlock(txs []*Transaction, prevHash []byte) *Block {
 	return block
 }
 
-func Genesis(coinbase *Transaction) *Block {
-	return CreateBlock([]*Transaction{coinbase}, make([]byte, 32))
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.Serialize())
+	}
+	tree := merkle.CreateMerkleTree(txHashes)
+
+	return tree.RootNode.Data
 }
 
 func (b *Block) Serialize() []byte {
 	var res bytes.Buffer
 	encoder := gob.NewEncoder(&res)
-
 	err := encoder.Encode(b)
-
-	Handle(err)
-
+	handlers.HandleErrors(err)
 	return res.Bytes()
 }
 
 func Deserialize(data []byte) *Block {
 	var block Block
-
 	decoder := gob.NewDecoder(bytes.NewReader(data))
-
 	err := decoder.Decode(&block)
-
-	Handle(err)
-
+	handlers.HandleErrors(err)
 	return &block
-}
-
-func Handle(err error) {
-	if err != nil {
-		log.Panic(err)
-	}
 }
