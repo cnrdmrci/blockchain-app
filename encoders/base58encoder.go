@@ -1,21 +1,17 @@
 package encoders
 
 import (
+	"blockchain-app/handlers"
 	"github.com/mr-tron/base58"
-	"log"
 )
 
-func Base58Encode(input []byte) []byte {
-	encode := base58.Encode(input)
-
-	return []byte(encode)
+func Base58Encode(input []byte) string {
+	return base58.Encode(input)
 }
 
-func Base58Decode(input []byte) []byte {
-	decode, err := base58.Decode(string(input[:]))
-	if err != nil {
-		log.Panic(err)
-	}
+func Base58Decode(input string) []byte {
+	decode, err := base58.Decode(input[:])
+	handlers.HandleErrors(err)
 
 	return decode
 }
