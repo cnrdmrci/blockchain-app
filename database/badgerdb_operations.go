@@ -27,6 +27,7 @@ func OpenDB(nodeID string) {
 	initDbs()
 	path := fmt.Sprintf(dbPath, nodeID)
 	opts := badger.DefaultOptions(path)
+	opts.Logger = nil
 	db, err := openDatabase(path, opts)
 	handlers.HandleErrors(err)
 	dbs[nodeID] = db
@@ -47,13 +48,25 @@ func Get(key []byte, nodeID string) []byte {
 		handlers.HandleErrors(errors.New("db closed"))
 	}
 	txn := db.NewTransaction(false)
-	item, getErr := txn.Get(key)
-	if getErr != nil || item == nil {
-		handlers.HandleErrors(errors.New("data is not found"))
+	item, _ := txn.Get(key)
+	if item == nil {
+		return nil
 	}
 
 	byteItem, _ := item.ValueCopy(nil)
 	return byteItem
+}
+
+func Set(key []byte, data []byte, nodeID string) {
+	db, exists := dbs[nodeID]
+	if !exists {
+		handlers.HandleErrors(errors.New("db closed"))
+	}
+	txn := db.NewTransaction(true)
+	setErr := txn.Set(key, data)
+	handlers.HandleErrors(setErr)
+	commitErr := txn.Commit()
+	handlers.HandleErrors(commitErr)
 }
 
 func retry(dir string, originalOpts badger.Options) (*badger.DB, error) {
