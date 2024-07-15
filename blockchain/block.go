@@ -3,9 +3,10 @@ package blockchain
 import (
 	"blockchain-app/handlers"
 	"blockchain-app/merkle"
-	"blockchain-app/pow"
 	"bytes"
 	"encoding/gob"
+	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -24,7 +25,7 @@ func CreateGenesisBlock(tx *Transaction) *Block {
 
 func CreateBlock(txs []*Transaction, prevHash []byte, height int) *Block {
 	block := &Block{time.Now().Unix(), []byte{}, txs, prevHash, 0, height}
-	pow := pow.NewProof(block)
+	pow := NewProof(block)
 	nonce, hash := pow.Run()
 
 	block.Hash = hash[:]
@@ -58,4 +59,19 @@ func Deserialize(data []byte) *Block {
 	err := decoder.Decode(&block)
 	handlers.HandleErrors(err)
 	return &block
+}
+
+func (b *Block) PrintBlockDetails() {
+	fmt.Printf("Hash: %x\n", b.Hash)
+	fmt.Printf("Prev. hash: %x\n", b.PrevHash)
+	pow := NewProof(b)
+	fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
+	for _, tx := range b.Transactions {
+		fmt.Println(tx)
+	}
+	fmt.Println()
+}
+
+func (b *Block) IsGenesis() bool {
+	return bytes.Compare(b.PrevHash, make([]byte, 32)) == 0
 }

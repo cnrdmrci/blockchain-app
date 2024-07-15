@@ -1,6 +1,9 @@
 package command
 
 const (
-	createWalletFlag  = "createwallet"
-	listAddressesFlag = "listaddresses"
+	nodeID               = "NODE_ID"
+	createWalletFlag     = "createwallet"
+	listAddressesFlag    = "listaddresses"
+	createBlockchainFlag = "createblockchain"
+	printBlockchainFlag  = "printblockchain"
 )

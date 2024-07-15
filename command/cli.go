@@ -19,6 +19,10 @@ func (cli *CommandLine) Run() {
 		cli.createWallet()
 	case listAddressesFlag:
 		cli.listAddresses()
+	case createBlockchainFlag:
+		cli.createBlockchain()
+	case printBlockchainFlag:
+		cli.printBlockchain()
 	default:
 		cli.printUsage()
 		runtime.Goexit()
@@ -27,6 +31,8 @@ func (cli *CommandLine) Run() {
 
 func (cli *CommandLine) printUsage() {
 	fmt.Println("Usage:")
-	fmt.Println(" " + createWalletFlag + " - Create a new wallet")
-	fmt.Println(" " + listAddressesFlag + " - List wallet addressses")
+	fmt.Println(" " + createWalletFlag + " -> Create a new wallet")
+	fmt.Println(" " + listAddressesFlag + " -> List wallet addressses")
+	fmt.Println(" " + createBlockchainFlag + " -address ADDRESS -> Create a blockchain and sends genesis reward to address")
+	fmt.Println(" " + printBlockchainFlag + " -> Print the blocks in the blockchain")
 }
