@@ -15,7 +15,7 @@ type BlockChain struct {
 	LastHash []byte
 }
 
-func InitBlockChain(rewardAddress, nodeID string) *BlockChain {
+func InitBlockChain(rewardAddress, nodeID string) {
 	lastBlockHash := database.Get([]byte(lastBlockHashKey), nodeID)
 	if lastBlockHash != nil {
 		fmt.Println("Blockchain already exists")
@@ -26,18 +26,22 @@ func InitBlockChain(rewardAddress, nodeID string) *BlockChain {
 	genesis := CreateGenesisBlock(cbtx)
 	database.Set(genesis.Hash, genesis.Serialize(), nodeID)
 	database.Set([]byte(lastBlockHashKey), genesis.Hash, nodeID)
-
-	blockchain := BlockChain{genesis.Hash}
-	return &blockchain
 }
 
 func GetLastBlock(nodeID string) *Block {
 	lastHash := database.Get([]byte(lastBlockHashKey), nodeID)
+	if lastHash == nil {
+		fmt.Println("Blockchain not created.")
+		runtime.Goexit()
+	}
 	blockByte := database.Get(lastHash, nodeID)
 	return Deserialize(blockByte)
 }
 
 func (b *Block) GetPreviousBlock(nodeID string) *Block {
+	if b.IsGenesis() {
+		return nil
+	}
 	prevBlock := database.Get(b.PrevHash, nodeID)
 	return Deserialize(prevBlock)
 }
@@ -88,7 +92,7 @@ func (b *Block) GetUTXO(STXO map[string][]int, currentUTXO map[string]TxOutputs)
 	return UTXO
 }
 
-func (c *BlockChain) AddBlock(block *Block, nodeID string) {
+func AddBlock(block *Block, nodeID string) {
 	blockData := block.Serialize()
 	database.Set(block.Hash, blockData, nodeID)
 	lastBlockHash := database.Get([]byte(lastBlockHashKey), nodeID)
@@ -96,7 +100,6 @@ func (c *BlockChain) AddBlock(block *Block, nodeID string) {
 	lastBlock := Deserialize(lastBlockData)
 	if block.Height > lastBlock.Height {
 		database.Set([]byte(lastBlockHashKey), block.Hash, nodeID)
-		c.LastHash = block.Hash
 	}
 }
 
@@ -120,16 +123,16 @@ func GetBlock(blockHash []byte, nodeID string) Block {
 func GetBlockHashes(nodeID string) [][]byte {
 	var blocks [][]byte
 
-	for block := GetLastBlock(nodeID); !block.IsGenesis(); block.GetPreviousBlock(nodeID) {
+	for block := GetLastBlock(nodeID); block != nil; block = block.GetPreviousBlock(nodeID) {
 		blocks = append(blocks, block.Hash)
 	}
 
 	return blocks
 }
 
-func (c *BlockChain) MineBlock(transactions []*Transaction, nodeID string) *Block {
+func MineBlock(transactions []*Transaction, nodeID string) *Block {
 	for _, tx := range transactions {
-		if VerifyTransaction(tx) != true {
+		if VerifyTransaction(tx, nodeID) != true {
 			handlers.HandleErrors(errors.New("invalid transaction"))
 		}
 	}
@@ -138,7 +141,7 @@ func (c *BlockChain) MineBlock(transactions []*Transaction, nodeID string) *Bloc
 	lastHeight := lastBlock.Height
 
 	newBlock := CreateBlock(transactions, lastBlock.Hash, lastHeight+1)
-	c.AddBlock(newBlock, nodeID)
+	AddBlock(newBlock, nodeID)
 
 	return newBlock
 }
@@ -147,7 +150,7 @@ func FindUTXO(nodeID string) map[string]TxOutputs {
 	UTXO := make(map[string]TxOutputs)
 	STXO := make(map[string][]int)
 
-	for block := GetLastBlock(nodeID); !block.IsGenesis(); block.GetPreviousBlock(nodeID) {
+	for block := GetLastBlock(nodeID); block != nil; block = block.GetPreviousBlock(nodeID) {
 		STXO = block.GetSTXO(STXO)
 		UTXO = block.GetUTXO(STXO, UTXO)
 	}
@@ -156,7 +159,7 @@ func FindUTXO(nodeID string) map[string]TxOutputs {
 }
 
 func FindTransaction(txID []byte, nodeID string) (Transaction, error) {
-	for block := GetLastBlock(nodeID); !block.IsGenesis(); block.GetPreviousBlock(nodeID) {
+	for block := GetLastBlock(nodeID); block != nil; block = block.GetPreviousBlock(nodeID) {
 		for _, tx := range block.Transactions {
 			if bytes.Compare(tx.ID, txID) == 0 {
 				return *tx, nil
@@ -179,14 +182,14 @@ func SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey, nodeID string) {
 	tx.Sign(privKey, prevTXs)
 }
 
-func VerifyTransaction(tx *Transaction) bool {
+func VerifyTransaction(tx *Transaction, nodeID string) bool {
 	if tx.IsCoinbase() {
 		return true
 	}
 	prevTXs := make(map[string]Transaction)
 
 	for _, in := range tx.Inputs {
-		prevTX, err := FindTransaction(in.TxID, "3000")
+		prevTX, err := FindTransaction(in.TxID, nodeID)
 		handlers.HandleErrors(err)
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
