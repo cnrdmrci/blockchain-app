@@ -69,6 +69,90 @@ func Set(key []byte, data []byte, nodeID string) {
 	handlers.HandleErrors(commitErr)
 }
 
+func Delete(key []byte, nodeID string) {
+	db, exists := dbs[nodeID]
+	if !exists {
+		handlers.HandleErrors(errors.New("db closed"))
+	}
+	txn := db.NewTransaction(true)
+	setErr := txn.Delete(key)
+	handlers.HandleErrors(setErr)
+	commitErr := txn.Commit()
+	handlers.HandleErrors(commitErr)
+}
+
+func BulkDelete(keys [][]byte, nodeID string) {
+	db, exists := dbs[nodeID]
+	if !exists {
+		handlers.HandleErrors(errors.New("db closed"))
+	}
+	txn := db.NewTransaction(true)
+	for _, key := range keys {
+		deleteErr := txn.Delete(key)
+		handlers.HandleErrors(deleteErr)
+	}
+	commitErr := txn.Commit()
+	handlers.HandleErrors(commitErr)
+}
+
+func DeleteByPrefix(prefix []byte, nodeID string) {
+	db, exists := dbs[nodeID]
+	if !exists {
+		handlers.HandleErrors(errors.New("db closed"))
+	}
+	collectSize := 10
+	txn := db.NewTransaction(false)
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	it := txn.NewIterator(opts)
+	keysForDelete := make([][]byte, 0, collectSize)
+	keysCollected := 0
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		key := it.Item().KeyCopy(nil)
+		keysForDelete = append(keysForDelete, key)
+		keysCollected++
+		if keysCollected == collectSize {
+			BulkDelete(keysForDelete, nodeID)
+			keysForDelete = make([][]byte, 0, collectSize)
+			keysCollected = 0
+		}
+	}
+	if keysCollected > 0 {
+		BulkDelete(keysForDelete, nodeID)
+	}
+}
+
+func CountByPrefix(prefix []byte, nodeID string) int {
+	db, exists := dbs[nodeID]
+	if !exists {
+		handlers.HandleErrors(errors.New("db closed"))
+	}
+	counter := 0
+	txn := db.NewTransaction(false)
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	it := txn.NewIterator(opts)
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		counter++
+	}
+
+	return counter
+}
+
+func GetIteratorByPrefix(prefix []byte, nodeID string) *badger.Iterator {
+	db, exists := dbs[nodeID]
+	if !exists {
+		handlers.HandleErrors(errors.New("db closed"))
+	}
+	txn := db.NewTransaction(false)
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	iter := txn.NewIterator(opts)
+	iter.Seek(prefix)
+
+	return iter
+}
+
 func retry(dir string, originalOpts badger.Options) (*badger.DB, error) {
 	lockPath := filepath.Join(dir, "LOCK")
 	if err := os.Remove(lockPath); err != nil {
