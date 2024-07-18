@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	dbPath = "./tmp/blocks_%s"
+	dbPath = "./database/blocks_%s"
 )
 
 var dbs map[string]*badger.DB
