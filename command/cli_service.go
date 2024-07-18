@@ -3,7 +3,9 @@ package command
 import (
 	"blockchain-app/blockchain"
 	"blockchain-app/database"
+	"blockchain-app/encoders"
 	"blockchain-app/handlers"
+	"blockchain-app/network"
 	"blockchain-app/wallet"
 	"errors"
 	"flag"
@@ -44,7 +46,7 @@ func (cli *CommandLine) listAddresses() {
 }
 
 func (cli *CommandLine) createBlockchain() {
-	rewardAddress := getFlagValue(createBlockchainFlag, "address", "The address to send genesis block reward to")
+	rewardAddress := getFlagValue(createBlockchainFlag, addressFlag, "The address to send genesis block reward to")
 
 	if !wallet.ValidateAddress(rewardAddress) {
 		handlers.HandleErrors(errors.New("address is not valid"))
@@ -53,11 +55,10 @@ func (cli *CommandLine) createBlockchain() {
 	database.OpenDB(cli.nodeID)
 	defer database.CloseDB(cli.nodeID)
 
-	_ = blockchain.InitBlockChain(rewardAddress, cli.nodeID)
+	blockchain.InitBlockChain(rewardAddress, cli.nodeID)
 	fmt.Println("Genesis created")
 
-	//UTXOSet := blockchain.UTXOSet{blockChain}
-	//UTXOSet.Reindex()
+	blockchain.Reindex(cli.nodeID)
 
 	fmt.Println("Finished!")
 }
@@ -66,24 +67,88 @@ func (cli *CommandLine) printBlockchain() {
 	database.OpenDB(cli.nodeID)
 	defer database.CloseDB(cli.nodeID)
 
-	block := blockchain.GetLastBlock(cli.nodeID)
-	block.PrintBlockDetails()
-	if block.IsGenesis() {
-		return
-	}
-	for {
-		block = block.GetPreviousBlock(cli.nodeID)
+	for block := blockchain.GetLastBlock(cli.nodeID); block != nil; block = block.GetPreviousBlock(cli.nodeID) {
 		block.PrintBlockDetails()
-		if block.IsGenesis() {
-			break
-		}
 	}
+}
+
+func (cli *CommandLine) getBalance() {
+	balanceAddress := getFlagValue(getBalanceFlag, addressFlag, "The address to get balance for")
+
+	if !wallet.ValidateAddress(balanceAddress) {
+		handlers.HandleErrors(errors.New("address is not valid"))
+	}
+
+	pubKeyHash := encoders.Base58Decode(balanceAddress)
+	pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
+
+	database.OpenDB(cli.nodeID)
+	defer database.CloseDB(cli.nodeID)
+	UTXOs := blockchain.FindUnspentTransactions(pubKeyHash, cli.nodeID)
+
+	balance := 0
+	for _, out := range UTXOs {
+		balance += out.Value
+	}
+
+	fmt.Printf("Balance of %s: %d\n", balanceAddress, balance)
+}
+
+func (cli *CommandLine) send() {
+	sendCmd := flag.NewFlagSet(sendFlag, flag.ExitOnError)
+
+	sendFrom := sendCmd.String(fromFlag, "", "Source wallet address")
+	sendTo := sendCmd.String(toFlag, "", "Destination wallet address")
+	sendAmount := sendCmd.Int(amountFlag, 0, "Amount to send")
+	sendMine := sendCmd.Bool(mineFlag, false, "Mine immediately on the same node")
+
+	_ = sendCmd.Parse(os.Args[2:])
+	if *sendFrom == "" || *sendTo == "" || *sendAmount <= 0 {
+		sendCmd.Usage()
+		runtime.Goexit()
+	}
+
+	if !wallet.ValidateAddress(*sendTo) {
+		handlers.HandleErrors(errors.New("address is not valid"))
+	}
+	if !wallet.ValidateAddress(*sendFrom) {
+		handlers.HandleErrors(errors.New("address is not valid"))
+	}
+
+	wallets := wallet.GetWallets(cli.nodeID)
+	walletSendFrom := wallets.GetWallet(*sendFrom)
+
+	database.OpenDB(cli.nodeID)
+	defer database.CloseDB(cli.nodeID)
+	tx := blockchain.NewTransaction(&walletSendFrom, *sendTo, *sendAmount, cli.nodeID)
+	if *sendMine {
+		txs := []*blockchain.Transaction{tx}
+		block := blockchain.MineBlock(txs, cli.nodeID)
+		blockchain.UpdateIndex(block, cli.nodeID)
+	} else {
+		network.SendTx(network.KnownNodes[0], tx)
+		fmt.Println("send tx")
+	}
+
+	fmt.Println("Success!")
+}
+
+func (cli *CommandLine) reindexUTXO() {
+	reindexUTXOCmd := flag.NewFlagSet(reindexUTXOFlag, flag.ExitOnError)
+	err := reindexUTXOCmd.Parse(os.Args[2:])
+	handlers.HandleErrors(err)
+
+	database.OpenDB(cli.nodeID)
+	defer database.CloseDB(cli.nodeID)
+	blockchain.Reindex(cli.nodeID)
+	count := blockchain.CountTransactions(cli.nodeID)
+	fmt.Printf("Done! There are %d transactions in the UTXO set.\n", count)
 }
 
 func getFlagValue(commandName string, flagName string, usageMessage string) string {
 	blockchainCmd := flag.NewFlagSet(commandName, flag.ExitOnError)
 	blockchainCmdValue := blockchainCmd.String(flagName, "", usageMessage)
-	blockchainCmd.Parse(os.Args[2:])
+	_ = blockchainCmd.Parse(os.Args[2:])
 	if *blockchainCmdValue == "" {
 		blockchainCmd.Usage()
 		runtime.Goexit()
