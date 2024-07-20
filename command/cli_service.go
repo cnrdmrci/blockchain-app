@@ -75,6 +75,20 @@ func (cli *CommandLine) printBlockchain() {
 	}
 }
 
+func (cli *CommandLine) printLastBlock() {
+	database.OpenDB(cli.nodeID)
+	defer database.CloseDB(cli.nodeID)
+
+	block := blockchain.GetLastBlock(cli.nodeID)
+	block.PrintBlockDetails()
+}
+
+func (cli *CommandLine) removeLastBlock() {
+	database.OpenDB(cli.nodeID)
+	defer database.CloseDB(cli.nodeID)
+	blockchain.RemoveLastBlock(cli.nodeID)
+}
+
 func (cli *CommandLine) getBalance() {
 	balanceAddress := getFlagValue(getBalanceFlag, addressFlag, "The address to get balance for")
 
@@ -129,7 +143,7 @@ func (cli *CommandLine) send() {
 		block := blockchain.MineBlock(txs, cli.nodeID)
 		blockchain.UpdateIndex(block, cli.nodeID)
 	} else {
-		network.SendTx(network.KnownNodes[0], tx)
+		network.SendTx(network.KnownNodeAddresses[0], tx)
 		fmt.Println("send tx")
 	}
 

@@ -6,6 +6,8 @@ const (
 	listAddressesFlag    = "listaddresses"
 	createBlockchainFlag = "createblockchain"
 	printBlockchainFlag  = "printblockchain"
+	printLastBlockFlag   = "printlastblock"
+	removeLastBlockFlag  = "removelastblock"
 	getBalanceFlag       = "getbalance"
 	sendFlag             = "send"
 	fromFlag             = "from"

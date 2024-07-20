@@ -25,6 +25,10 @@ func (cli *CommandLine) Run() {
 		cli.createBlockchain()
 	case printBlockchainFlag:
 		cli.printBlockchain()
+	case printLastBlockFlag:
+		cli.printLastBlock()
+	case removeLastBlockFlag:
+		cli.removeLastBlock()
 	case getBalanceFlag:
 		cli.getBalance()
 	case sendFlag:
@@ -56,6 +60,12 @@ func (cli *CommandLine) printUsage() {
 
 	c.Print(space + printBlockchainFlag)
 	fmt.Println(" --------------------------------> Print the blocks in the blockchain")
+
+	c.Print(space + printLastBlockFlag)
+	fmt.Println(" ---------------------------------> Print last block")
+
+	c.Print(space + removeLastBlockFlag)
+	fmt.Println(" --------------------------------> Remove last block from the blockchain")
 
 	c.Print(space + getBalanceFlag + " -address ADDRESS")
 	fmt.Println(" --------------------> Get the balance for an address")

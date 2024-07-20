@@ -38,6 +38,25 @@ func GetLastBlock(nodeID string) *Block {
 	return Deserialize(blockByte)
 }
 
+func RemoveLastBlock(nodeID string) {
+	lastHash := database.Get([]byte(lastBlockHashKey), nodeID)
+	if lastHash == nil {
+		fmt.Println("Blockchain not created.")
+		runtime.Goexit()
+	}
+	lastBlockByte := database.Get(lastHash, nodeID)
+	lastBlock := Deserialize(lastBlockByte)
+	if !lastBlock.IsGenesis() {
+		prevBlockByte := database.Get(lastBlock.PrevHash, nodeID)
+		prevBlock := Deserialize(prevBlockByte)
+		database.Set([]byte(lastBlockHashKey), prevBlock.Hash, nodeID)
+		database.Delete(lastHash, nodeID)
+		return
+	}
+	database.Delete([]byte(lastBlockHashKey), nodeID)
+	database.Delete(lastHash, nodeID)
+}
+
 func IsBlockchainExist(nodeID string) bool {
 	lastHash := database.Get([]byte(lastBlockHashKey), nodeID)
 	if lastHash == nil {
