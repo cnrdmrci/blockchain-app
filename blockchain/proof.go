@@ -26,12 +26,12 @@ func NewProof(b *Block) *ProofOfWork {
 	return pow
 }
 
-func (pow *ProofOfWork) InitData(nonce int) []byte {
+func (pow *ProofOfWork) InitData(nonce int64) []byte {
 	data := bytes.Join(
 		[][]byte{
 			pow.Block.PrevHash,
 			pow.Block.HashTransactions(),
-			Int64ToByteSlice(int64(nonce)),
+			Int64ToByteSlice(nonce),
 			Int64ToByteSlice(int64(Difficulty)),
 		},
 		[]byte{},
@@ -40,11 +40,11 @@ func (pow *ProofOfWork) InitData(nonce int) []byte {
 	return data
 }
 
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) Run() (int64, []byte) {
 	var intHash big.Int
 	var hash [32]byte
 
-	nonce := 0
+	var nonce int64 = 0
 
 	for nonce < math.MaxInt64 {
 		data := pow.InitData(nonce)

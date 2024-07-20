@@ -15,15 +15,15 @@ type Block struct {
 	Hash         []byte
 	Transactions []*Transaction
 	PrevHash     []byte
-	Nonce        int
-	Height       int
+	Nonce        int64
+	Height       int64
 }
 
 func CreateGenesisBlock(tx *Transaction) *Block {
-	return CreateBlock([]*Transaction{tx}, make([]byte, 32), 0)
+	return CreateBlock([]*Transaction{tx}, make([]byte, 32), 1)
 }
 
-func CreateBlock(txs []*Transaction, prevHash []byte, height int) *Block {
+func CreateBlock(txs []*Transaction, prevHash []byte, height int64) *Block {
 	block := &Block{time.Now().Unix(), []byte{}, txs, prevHash, 0, height}
 	pow := NewProof(block)
 	nonce, hash := pow.Run()
