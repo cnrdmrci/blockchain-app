@@ -17,7 +17,7 @@ func StartGrpcServer(nodeID, minerAddress string) {
 	defer database.CloseDB(serverNodeID)
 	panicIfBlockchainNotExist()
 
-	//go checkMaxHeight()
+	go checkMaxHeight()
 
 	grpcServer := grpc.NewServer()
 	blockchain_network.RegisterBlockchainServiceServer(grpcServer, &BlockchainServer{})

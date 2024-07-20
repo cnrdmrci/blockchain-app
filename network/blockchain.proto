@@ -7,14 +7,22 @@ option go_package = "/blockchain_network";
 service BlockchainService {
   rpc GetMaxHeight (GetMaxHeightRequest) returns (GetMaxHeightResponse);
   rpc StreamGetAllBlockchain (GetAllBlockchainRequest) returns (stream Block);
+  rpc StreamGetBlocksUntilHeight (GetBlocksUntilHeightRequest) returns (stream Block);
 }
 
-message GetMaxHeightRequest{}
+message GetMaxHeightRequest{
+  string requesterNodeAddress = 1;
+}
 message GetMaxHeightResponse {
   int64 height = 1;
+  string randomActiveNodeAddress = 2;
 }
 
 message GetAllBlockchainRequest{}
+
+message GetBlocksUntilHeightRequest {
+  int64 height = 1;
+}
 
 
 message Block {
