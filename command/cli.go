@@ -12,6 +12,7 @@ type CommandLine struct {
 }
 
 func (cli *CommandLine) Run() {
+	go closeApp()
 	cli.setNodeID()
 	cli.validateArgs()
 
@@ -30,7 +31,8 @@ func (cli *CommandLine) Run() {
 		cli.send()
 	case reindexUTXOFlag:
 		cli.reindexUTXO()
-
+	case startNodeFlag:
+		cli.startNode()
 	default:
 		cli.printUsage()
 		runtime.Goexit()
@@ -64,4 +66,6 @@ func (cli *CommandLine) printUsage() {
 	c.Print(space + reindexUTXOFlag)
 	fmt.Println(" ------------------------------------> Rebuilds the UTXO set")
 
+	c.Print(space + startNodeFlag + " -miner ADDRESS")
+	fmt.Println(" -----------------------> Start a node with TxID specified in " + nodeID + " env. var. -miner enables mining")
 }

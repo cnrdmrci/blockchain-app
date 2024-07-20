@@ -10,8 +10,11 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/fatih/color"
+	"github.com/vrecan/death/v3"
 	"os"
 	"runtime"
+	"syscall"
 )
 
 func (cli *CommandLine) validateArgs() {
@@ -145,6 +148,24 @@ func (cli *CommandLine) reindexUTXO() {
 	fmt.Printf("Done! There are %d transactions in the UTXO set.\n", count)
 }
 
+func (cli *CommandLine) startNode() {
+	startNodeCmd := flag.NewFlagSet(startNodeFlag, flag.ExitOnError)
+	startNodeMiner := startNodeCmd.String(minerFlag, "", "Enable mining mode and send reward to ADDRESS")
+	err := startNodeCmd.Parse(os.Args[2:])
+	handlers.HandleErrors(err)
+
+	fmt.Printf("Starting Node %s\n", cli.nodeID)
+
+	if len(*startNodeMiner) > 0 {
+		if wallet.ValidateAddress(*startNodeMiner) {
+			fmt.Println("Mining is on. Address to receive rewards: ", *startNodeMiner)
+		} else {
+			handlers.HandleErrors(errors.New("miner address not valid"))
+		}
+	}
+	network.StartGrpcServer(cli.nodeID, *startNodeMiner)
+}
+
 func getFlagValue(commandName string, flagName string, usageMessage string) string {
 	blockchainCmd := flag.NewFlagSet(commandName, flag.ExitOnError)
 	blockchainCmdValue := blockchainCmd.String(flagName, "", usageMessage)
@@ -154,4 +175,13 @@ func getFlagValue(commandName string, flagName string, usageMessage string) stri
 		runtime.Goexit()
 	}
 	return *blockchainCmdValue
+}
+
+func closeApp() {
+	d := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	d.WaitForDeathWithFunc(func() {
+		color.Red("\napp closing!\n")
+		defer os.Exit(1)
+		defer runtime.Goexit()
+	})
 }
