@@ -38,6 +38,14 @@ func GetLastBlock(nodeID string) *Block {
 	return Deserialize(blockByte)
 }
 
+func IsBlockchainExist(nodeID string) bool {
+	lastHash := database.Get([]byte(lastBlockHashKey), nodeID)
+	if lastHash == nil {
+		return false
+	}
+	return true
+}
+
 func (b *Block) GetPreviousBlock(nodeID string) *Block {
 	if b.IsGenesis() {
 		return nil
@@ -96,15 +104,22 @@ func AddBlock(block *Block, nodeID string) {
 	blockData := block.Serialize()
 	database.Set(block.Hash, blockData, nodeID)
 	lastBlockHash := database.Get([]byte(lastBlockHashKey), nodeID)
-	lastBlockData := database.Get(lastBlockHash, nodeID)
-	lastBlock := Deserialize(lastBlockData)
-	if block.Height > lastBlock.Height {
+	if lastBlockHash != nil {
+		lastBlockData := database.Get(lastBlockHash, nodeID)
+		lastBlock := Deserialize(lastBlockData)
+		if block.Height > lastBlock.Height {
+			database.Set([]byte(lastBlockHashKey), block.Hash, nodeID)
+		}
+	} else {
 		database.Set([]byte(lastBlockHashKey), block.Hash, nodeID)
 	}
 }
 
-func GetBestHeight(nodeID string) int {
+func GetMaxHeight(nodeID string) int64 {
 	lastBlockHash := database.Get([]byte(lastBlockHashKey), nodeID)
+	if lastBlockHash == nil {
+		return 0
+	}
 	lastBlockData := database.Get(lastBlockHash, nodeID)
 	lastBlock := Deserialize(lastBlockData)
 	return lastBlock.Height
