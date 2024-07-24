@@ -5,12 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"github.com/fatih/color"
 	"log"
 	"math"
 	"math/big"
 )
-
-const Difficulty = 12
 
 type ProofOfWork struct {
 	Block  *Block
@@ -59,7 +58,9 @@ func (pow *ProofOfWork) Run() (int64, []byte) {
 			nonce++
 		}
 	}
-	fmt.Println()
+	fmt.Printf("\r%s", "\033[2K")
+	color.Cyan("\rNonce found: %d", nonce)
+	color.Cyan("Block Hash : %x", hash)
 
 	return nonce, hash[:]
 }
