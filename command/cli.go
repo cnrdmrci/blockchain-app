@@ -23,6 +23,8 @@ func (cli *CommandLine) Run() {
 		cli.listAddresses()
 	case createBlockchainFlag:
 		cli.createBlockchain()
+	case updateBlockchainFlag:
+		cli.updateBlockchain()
 	case printBlockchainFlag:
 		cli.printBlockchain()
 	case printLastBlockFlag:
@@ -57,6 +59,9 @@ func (cli *CommandLine) printUsage() {
 
 	c.Print(space + createBlockchainFlag + " -address ADDRESS")
 	fmt.Println(" --------------> Create a blockchain and sends genesis reward to address")
+
+	c.Print(space + updateBlockchainFlag)
+	fmt.Println(" -------------------------------> Update blockchain via other nodes")
 
 	c.Print(space + printBlockchainFlag)
 	fmt.Println(" --------------------------------> Print the blocks in the blockchain")

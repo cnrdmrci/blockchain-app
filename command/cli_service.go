@@ -59,11 +59,16 @@ func (cli *CommandLine) createBlockchain() {
 	defer database.CloseDB(cli.nodeID)
 
 	blockchain.InitBlockChain(rewardAddress, cli.nodeID)
-	fmt.Println("Genesis created")
-
 	blockchain.Reindex(cli.nodeID)
 
-	fmt.Println("Finished!")
+	color.HiCyan("Genesis block created.")
+}
+
+func (cli *CommandLine) updateBlockchain() {
+	database.OpenDB(cli.nodeID)
+	defer database.CloseDB(cli.nodeID)
+
+	network.UpdateBlockchainViaOtherNodes(cli.nodeID)
 }
 
 func (cli *CommandLine) printBlockchain() {
@@ -87,6 +92,7 @@ func (cli *CommandLine) removeLastBlock() {
 	database.OpenDB(cli.nodeID)
 	defer database.CloseDB(cli.nodeID)
 	blockchain.RemoveLastBlock(cli.nodeID)
+	blockchain.Reindex(cli.nodeID)
 }
 
 func (cli *CommandLine) getBalance() {
@@ -139,12 +145,12 @@ func (cli *CommandLine) send() {
 	defer database.CloseDB(cli.nodeID)
 	tx := blockchain.NewTransaction(&walletSendFrom, *sendTo, *sendAmount, cli.nodeID)
 	if *sendMine {
-		txs := []*blockchain.Transaction{tx}
+		mineRewardTx := blockchain.CreateMineRewardTx(*sendFrom)
+		txs := []*blockchain.Transaction{mineRewardTx, tx}
 		block := blockchain.MineBlock(txs, cli.nodeID)
 		blockchain.UpdateIndex(block, cli.nodeID)
 	} else {
-		network.SendTx(network.KnownNodeAddresses[0], tx)
-		fmt.Println("send tx")
+		network.SendTransaction(tx, cli.nodeID)
 	}
 
 	fmt.Println("Success!")
@@ -172,7 +178,7 @@ func (cli *CommandLine) startNode() {
 
 	if len(*startNodeMiner) > 0 {
 		if wallet.ValidateAddress(*startNodeMiner) {
-			fmt.Println("Mining is on. Address to receive rewards: ", *startNodeMiner)
+			color.HiCyan("Mining is on. Address to receive rewards: %s", *startNodeMiner)
 		} else {
 			handlers.HandleErrors(errors.New("miner address not valid"))
 		}

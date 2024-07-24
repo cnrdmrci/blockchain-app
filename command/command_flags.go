@@ -5,6 +5,7 @@ const (
 	createWalletFlag     = "createwallet"
 	listAddressesFlag    = "listaddresses"
 	createBlockchainFlag = "createblockchain"
+	updateBlockchainFlag = "updateblockchain"
 	printBlockchainFlag  = "printblockchain"
 	printLastBlockFlag   = "printlastblock"
 	removeLastBlockFlag  = "removelastblock"
