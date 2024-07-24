@@ -10,10 +10,12 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
 	"strings"
+	"time"
 )
 
 type Transaction struct {
@@ -53,8 +55,17 @@ func DeserializeTransaction(data []byte) Transaction {
 }
 
 func CreateCoinbaseTx(to string) *Transaction {
-	txin := TxInput{[]byte{}, -1, nil, []byte("First Transaction from Genesis")}
-	txout := NewTXOutput(20, to)
+	return CreateTx(to, "First Transaction from Genesis")
+}
+
+func CreateMineRewardTx(to string) *Transaction {
+	unixTime := time.Now().Unix()
+	return CreateTx(to, fmt.Sprintf("Mining Reward - %d", unixTime))
+}
+
+func CreateTx(to, pubKeyMessage string) *Transaction {
+	txin := TxInput{[]byte{}, -1, nil, []byte(pubKeyMessage)}
+	txout := NewTXOutput(miningRewardAmount, to)
 
 	tx := Transaction{nil, []TxInput{txin}, []TxOutput{*txout}}
 	tx.ID = tx.Hash()
@@ -70,7 +81,7 @@ func NewTransaction(w *wallet.Wallet, to string, amount int, nodeID string) *Tra
 	acc, validOutputs := FindSpendableOutputs(pubKeyHash, amount, nodeID)
 
 	if acc < amount {
-		log.Panic("Error: not enough funds")
+		handlers.HandleErrors(errors.New("error: not enough funds"))
 	}
 
 	for txid, outs := range validOutputs {
