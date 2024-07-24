@@ -1,5 +1,7 @@
 package blockchain
 
 const (
-	lastBlockHashKey = "lh"
+	lastBlockHashKey   = "lh"
+	miningRewardAmount = 20
+	Difficulty         = 20
 )
