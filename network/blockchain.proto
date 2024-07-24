@@ -8,6 +8,8 @@ service BlockchainService {
   rpc GetMaxHeight (GetMaxHeightRequest) returns (GetMaxHeightResponse);
   rpc StreamGetAllBlockchain (GetAllBlockchainRequest) returns (stream Block);
   rpc StreamGetBlocksUntilHeight (GetBlocksUntilHeightRequest) returns (stream Block);
+  rpc CreateTransaction (Transaction) returns (CreateTransactionResponse);
+  rpc StreamGetAllTransactions (GetAllTransactionsRequest) returns (stream Transaction);
 }
 
 message GetMaxHeightRequest{
@@ -19,9 +21,15 @@ message GetMaxHeightResponse {
 }
 
 message GetAllBlockchainRequest{}
+message GetAllTransactionsRequest{}
 
 message GetBlocksUntilHeightRequest {
   int64 height = 1;
+}
+
+message CreateTransactionResponse{
+  bool success = 1;
+  string message = 2;
 }
 
 

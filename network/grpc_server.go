@@ -18,6 +18,8 @@ func StartGrpcServer(nodeID, minerAddress string) {
 	panicIfBlockchainNotExist()
 
 	go checkMaxHeight()
+	go takeTransactions()
+	go mineTxToBlockViaMemPool()
 
 	grpcServer := grpc.NewServer()
 	blockchain_network.RegisterBlockchainServiceServer(grpcServer, &BlockchainServer{})
