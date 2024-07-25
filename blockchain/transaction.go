@@ -12,9 +12,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"log"
 	"math/big"
-	"strings"
 	"time"
 )
 
@@ -203,23 +203,21 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	return txCopy
 }
 
-func (tx Transaction) String() string {
-	var lines []string
+func (tx Transaction) Print() string {
+	color.Magenta(getSpace(4)+"- Transaction ID: %x", tx.ID)
 
-	lines = append(lines, fmt.Sprintf("--- Transaction %x:", tx.ID))
 	for i, input := range tx.Inputs {
-		lines = append(lines, fmt.Sprintf("     Input %d:", i))
-		lines = append(lines, fmt.Sprintf("       TxID:     %x", input.TxID))
-		lines = append(lines, fmt.Sprintf("       Out:       %d", input.Out))
-		lines = append(lines, fmt.Sprintf("       Signature: %x", input.Signature))
-		lines = append(lines, fmt.Sprintf("       PubKey:    %x", input.PubKey))
+		color.Yellow(getSpace(6)+"- Input %d:", i)
+		color.White(getSpace(10)+"TxID     : %x", input.TxID)
+		color.White(getSpace(10)+"Out      : %x", input.Out)
+		color.White(getSpace(10)+"Signature: %x", input.Signature)
+		color.White(getSpace(10)+"PubKey   : %x", input.PubKey)
 	}
 
 	for i, output := range tx.Outputs {
-		lines = append(lines, fmt.Sprintf("     Output %d:", i))
-		lines = append(lines, fmt.Sprintf("       Value:  %d", output.Value))
-		lines = append(lines, fmt.Sprintf("       Script: %x", output.PubKeyHash))
+		color.Yellow(getSpace(6)+"- Output %d:", i)
+		color.White(getSpace(10)+"Amount   : %d", output.Value)
+		color.White(getSpace(10)+"PubHash  : %x", output.PubKeyHash)
 	}
-
-	return strings.Join(lines, "\n")
+	return ""
 }

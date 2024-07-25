@@ -78,6 +78,7 @@ func (cli *CommandLine) printBlockchain() {
 	for block := blockchain.GetLastBlock(cli.nodeID); block != nil; block = block.GetPreviousBlock(cli.nodeID) {
 		block.PrintBlockDetails()
 	}
+	blockchain.PrintBlockDivider()
 }
 
 func (cli *CommandLine) printLastBlock() {
@@ -86,6 +87,7 @@ func (cli *CommandLine) printLastBlock() {
 
 	block := blockchain.GetLastBlock(cli.nodeID)
 	block.PrintBlockDetails()
+	blockchain.PrintBlockDivider()
 }
 
 func (cli *CommandLine) removeLastBlock() {

@@ -5,7 +5,7 @@ import (
 	"blockchain-app/merkle"
 	"bytes"
 	"encoding/gob"
-	"fmt"
+	"github.com/fatih/color"
 	"strconv"
 	"time"
 )
@@ -62,14 +62,25 @@ func Deserialize(data []byte) *Block {
 }
 
 func (b *Block) PrintBlockDetails() {
-	fmt.Printf("Hash: %x\n", b.Hash)
-	fmt.Printf("Prev. hash: %x\n", b.PrevHash)
-	pow := NewProof(b)
-	fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
+	PrintBlockDivider()
+	color.Green("Block; Height: %d, Nonce: %d, Timestamp: %d, PoW: %s", b.Height, b.Nonce, b.Timestamp, strconv.FormatBool(NewProof(b).Validate()))
+	color.Yellow(getSpace(2)+"- Block Hash: %x\n", b.Hash)
+	color.Yellow(getSpace(2)+"- Prev. Hash: %x\n", b.PrevHash)
 	for _, tx := range b.Transactions {
-		fmt.Println(tx)
+		tx.Print()
 	}
-	fmt.Println()
+}
+
+func PrintBlockDivider() {
+	color.Red("---------------------------------------------------------------------------------------")
+}
+
+func getSpace(count int) string {
+	space := ""
+	for i := 0; i < count; i++ {
+		space += " "
+	}
+	return space
 }
 
 func (b *Block) IsGenesis() bool {
