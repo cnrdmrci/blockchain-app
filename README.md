@@ -1,3 +1,23 @@
+# Multi Node Blockchain Simulation
+
+[Medium Article Series](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-article-series-5beebeae510f)
+
+## The Posts
+
+[1-) Blocks Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-1-blocks-en-37c530a9c887) : What is a block? A block is a “box” of transactions that also points to the previous block. This creates the chain.
+
+[2-) Transactions and UTXO Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-2-transactions-and-utxo-en-9b1a6310f58b) : How do coins move? A transaction spends old outputs and creates new ones. We track spendable coins with a simple UTXO set.
+
+[3-) Proof of Work Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-3-proof-of-work-en-8d90a34e2151) : How is a block mined? The miner keeps guessing a number (nonce) until the block’s hash meets a target. That’s Proof of Work.
+
+[4-) Wallet Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-4-wallet-en-286d9e21cb54) : How do you own coins? You create a key pair and an address. You sign transactions to prove the coins are yours.
+
+[5-) Database Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-5-database-en-1feac91549f9) : How do nodes remember state? We store the chain and UTXO data on disk so a node can restart safely and quickly.
+
+[6-) Network Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-6-network-en-73f39ceff952) : How do nodes talk? With gRPC. One node runs a server; others connect as clients. They share new blocks and transactions and stay in sync.
+
+[7-) Build Simulation Article](https://medium.com/@caner.demirci/multi-node-blockchain-simulation-part-7-build-simulation-en-4be7866c5ffc) : How do you see it all working? Start multiple nodes, mine a block, send coins, and watch the network update in real time.
+
 # Usage
 
 ```bash
